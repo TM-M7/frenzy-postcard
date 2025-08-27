@@ -46,8 +46,8 @@
                     <li class="nav-item"><a class="nav-link link" href="#gallery">Gallery</a></li>
                     <li class="nav-item"><a class="nav-link link" href="#commissions">Commissions</a></li>
                     <li class="nav-item"><a class="nav-link link" href="#prices">Prices</a></li>
-                    <li class="nav-item"><a class="nav-link link" href="#music">Ambient</a></li>
                     <li class="nav-item"><a class="nav-link link" href="#contact">Contact</a></li>
+                    <li class="nav-item ms-lg-2"></li>
                     <li class="nav-item ms-lg-3">
                         <button id="themeToggle" class="btn btn-outline-light btn-sm rounded-3" data-bs-toggle="tooltip"
                             title="Toggle day/night">
@@ -385,7 +385,7 @@
         </div>
 
         <footer class="text-center text-dim py-4 small">
-            © <span id="year"></span> Frenzy. Made with ❤ by M_M.
+            © <span id="year"></span> Frenzy. Made with ❤ by M_M
         </footer>
     </main>
 
@@ -554,6 +554,84 @@
                 tgBtn.after(extra);
             }
         })();
+        document.addEventListener("DOMContentLoaded", () => {
+            const galleryLinks = [...document.querySelectorAll("[data-gallery]")];
+            let currentIndex = -1, modal, img;
+
+            function buildModal() {
+                modal = document.createElement("div");
+                modal.style.cssText = `
+      position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);
+      display:flex;align-items:center;justify-content:center;flex-direction:column;
+    `;
+                modal.innerHTML = `
+      <img id="lb-img"
+           style="max-width:90%;max-height:85%;border-radius:12px;box-shadow:0 0 30px rgba(0,0,0,.6)">
+      <div style="position:absolute;top:50%;left:0;right:0;display:flex;justify-content:space-between;pointer-events:none;">
+        <button id="prevImg" style="pointer-events:auto;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem">⟨</button>
+        <button id="nextImg" style="pointer-events:auto;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem">⟩</button>
+      </div>
+      <button id="closeModal" style="position:absolute;top:15px;right:20px;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;">✕</button>
+    `;
+                document.body.appendChild(modal);
+                img = modal.querySelector("#lb-img");
+
+                // — единичный клик по фону закрывает
+                modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+                // — клики внутри не всплывают (чтобы не требовалось «два раза»)
+                img.addEventListener("click", (e) => e.stopPropagation());
+                modal.querySelector("#prevImg").addEventListener("click", (e) => { e.stopPropagation(); showPrev(); });
+                modal.querySelector("#nextImg").addEventListener("click", (e) => { e.stopPropagation(); showNext(); });
+                modal.querySelector("#closeModal").addEventListener("click", (e) => { e.stopPropagation(); closeModal(); });
+
+                // — клавиатура
+                document.addEventListener("keydown", keyHandler);
+
+                // — тач-свайпы
+                let sx = 0, dx = 0;
+                modal.addEventListener("touchstart", (e) => { sx = e.changedTouches[0].clientX; });
+                modal.addEventListener("touchend", (e) => {
+                    dx = e.changedTouches[0].clientX - sx;
+                    if (Math.abs(dx) > 45) (dx > 0 ? showPrev() : showNext());
+                });
+            }
+
+            function openModal(index) {
+                currentIndex = index;
+                buildModal();
+                img.src = galleryLinks[currentIndex].getAttribute("href");
+            }
+
+            function closeModal() {
+                if (!modal) return;
+                modal.remove();
+                document.removeEventListener("keydown", keyHandler);
+                modal = null; currentIndex = -1;
+            }
+
+            // — зацикливание (loop)
+            function showPrev() {
+                if (currentIndex < 0) return;
+                currentIndex = (currentIndex - 1 + galleryLinks.length) % galleryLinks.length;
+                img.src = galleryLinks[currentIndex].getAttribute("href");
+            }
+            function showNext() {
+                if (currentIndex < 0) return;
+                currentIndex = (currentIndex + 1) % galleryLinks.length;
+                img.src = galleryLinks[currentIndex].getAttribute("href");
+            }
+
+            function keyHandler(e) {
+                if (e.key === "Escape") closeModal();
+                if (e.key === "ArrowLeft") showPrev();
+                if (e.key === "ArrowRight") showNext();
+            }
+
+            galleryLinks.forEach((link, i) => {
+                link.addEventListener("click", (e) => { e.preventDefault(); openModal(i); });
+            });
+        });
     </script>
 
 

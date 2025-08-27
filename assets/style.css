@@ -288,3 +288,139 @@ body.theme-day #ambientControl {
   to   { filter: drop-shadow(0 0 12px #ffea4d) drop-shadow(0 0 22px #ffd200); }
 }
 @keyframes fadeIn{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+
+/* === NAV & PLAYER Z-ORDER / MOBILE === */
+.navbar { z-index: 1300; }          /* меню поверх всего */
+#ambientControl { z-index: 900; }   /* плеер ниже меню */
+
+@media (max-width: 576px){
+  /* чтобы плеер не перекрывал хедер на телефонах */
+  #ambientControl{
+    top: auto; bottom: 14px; right: 14px;
+  }
+}
+
+/* === Жёлтый гамбургер и рамка === */
+.navbar-toggler{
+  border-color: #ffd28a !important;
+  box-shadow: 0 0 10px rgba(255,210,138,.25);
+}
+.navbar-toggler:focus{ box-shadow: 0 0 0 .2rem rgba(255,210,138,.25); }
+
+/* кастомная иконка гамбургера с жёлтыми линиями */
+.navbar-toggler-icon{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23ffd28a' stroke-width='2' stroke-linecap='round' d='M4 7h22M4 15h22M4 23h22'/%3E%3/svg%3E") !important;
+  filter: drop-shadow(0 0 6px rgba(255,210,138,.6));
+}
+
+/* опционально — цвет выпавшего меню “под сайт” */
+.navbar .collapse{
+  background: rgba(20,20,30,.50);
+  border-radius: 12px;
+  padding: .4rem .6rem;
+}
+body.theme-day .navbar .collapse{
+  background: rgba(255, 211, 138, .25); /* тёплый жёлтый в дневной теме */
+}
+
+/* мини-кнопка-квадратик (меню галереи) */
+.btn-square {
+  width: 38px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 10px; border: 1px solid rgba(255,255,255,.2);
+  background: linear-gradient(180deg, rgba(255,210,138,.25), rgba(255,210,138,.08));
+}
+.btn-square i{
+  font-style: normal; font-weight: 800; line-height: 1;
+}
+
+/* === "БОЛЬШЕ?" оверлей на последней карточке галереи === */
+.gallery-grid { position: relative; } /* контейнер с превью */
+.gallery-item { position: relative; overflow: hidden; }
+
+.gallery-item.more-overlay::after,
+.gallery-item.more-overlay::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  transition: .25s ease;
+}
+
+/* затемнение + лёгкий блюр у картинки, когда наведён оверлей */
+.gallery-item.more-overlay:hover img,
+.gallery-item.more-overlay:focus-within img {
+  filter: blur(2px) brightness(.65);
+  transform: scale(1.02);
+}
+
+/* лёгкий общий градиент-дымка поверх */
+.gallery-item.more-overlay::before {
+  background: radial-gradient(120% 120% at 100% 0%,
+              rgba(255,210,138,.20), rgba(0,0,0,.55));
+  opacity: .0;
+}
+.gallery-item.more-overlay:hover::before,
+.gallery-item.more-overlay:focus-within::before { opacity: 1; }
+
+/* центр: 3 светящиеся полоски */
+.more-btn {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  z-index: 2;
+}
+.more-bars {
+  display: grid; gap: 6px;
+  filter: drop-shadow(0 0 10px rgba(255,210,138,.9))
+          drop-shadow(0 0 18px rgba(255,210,138,.5));
+  transform: translateY(0);
+  transition: transform .25s ease, opacity .25s ease;
+}
+.more-bars span{
+  width: 56px; height: 5px; border-radius: 6px;
+  background: linear-gradient(90deg,#c27a06,#ff5e00 70%, #c59241);
+  opacity: .95;
+}
+
+/* подпись "БОЛЬШЕ?" всплывает на ховере */
+.more-caption {
+  position: absolute; bottom: 14px; right: 14px;
+  font-weight: 800; letter-spacing: .5px;
+  background: rgba(20,20,30,.55);
+  border: 1px solid rgba(255,210,138,.6);
+  border-radius: 999px; padding: 6px 12px;
+  color: #c76b01; text-transform: uppercase; font-size: 12px;
+  backdrop-filter: blur(6px);
+  opacity: 0; transform: translateY(6px);
+  transition: .25s ease;
+}
+
+/* наведение/фокус */
+.gallery-item.more-overlay:hover .more-bars,
+.gallery-item.more-overlay:focus-within .more-bars { transform: translateY(-2px); }
+.gallery-item.more-overlay:hover .more-caption,
+.gallery-item.more-overlay:focus-within .more-caption { opacity: 1; transform: translateY(0); }
+
+/* доступность фокуса для клавы */
+.more-link{ position:absolute; inset:0; z-index:3; }
+.more-link:focus{ outline: none; }
+.more-link:focus-visible{ outline: 2px solid #ffd28a; outline-offset: 4px; border-radius: 12px; }
+
+/* плеер не перекрывает модалку */
+.lb-open #ambientControl { 
+  pointer-events: none; 
+  opacity: .25;
+  filter: blur(1px);
+}
+
+#lb-close{
+  position:absolute; right:18px; top:12px;
+  z-index: 2105;                 /* выше всех */
+  pointer-events: auto;          /* на всякий случай */
+  padding: 6px 10px;
+  line-height: 1;
+  border-radius: 10px;
+  background: rgba(20,20,30,.35);
+  border: 1px solid rgba(255,210,138,.55);
+}
+#lb-close:focus-visible{
+  outline: 2px solid #ffd28a; outline-offset: 3px;
+}
