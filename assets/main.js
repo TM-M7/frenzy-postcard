@@ -533,3 +533,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // наш код защищён флагом __LB_INIT__
 
 })();
+
+document.addEventListener('DOMContentLoaded', () => {
+  const ac = document.getElementById('ambientControl');
+  if (!ac) return;
+
+  function clampPlayer(){
+    const r = ac.getBoundingClientRect();
+    if (r.height > 90) {
+      // кого-то занесло — жёстко зажимаем
+      ac.style.height = '64px';
+      ac.style.maxHeight = '64px';
+      // убираем абсолютные фоны внутри
+      [...ac.children].forEach(ch => {
+        const cs = getComputedStyle(ch);
+        if (cs.position === 'absolute' || cs.height === '100%' || cs.inset !== 'auto') {
+          ch.style.position = 'static';
+          ch.style.inset = 'auto';
+          ch.style.height = 'auto';
+          ch.style.maxHeight = '48px';
+        }
+      });
+    }
+  }
+  clampPlayer();
+  window.addEventListener('resize', clampPlayer);
+  // если у тебя ещё есть мутации DOM — реагируем
+  new MutationObserver(clampPlayer).observe(ac, { attributes:true, childList:true, subtree:true });
+});

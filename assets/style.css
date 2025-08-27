@@ -424,3 +424,67 @@ body.theme-day .navbar .collapse{
 #lb-close:focus-visible{
   outline: 2px solid #ffd28a; outline-offset: 3px;
 }
+/* --- HARD FIX: player size & layers --- */
+:root { --ac:#ffd28a; }
+
+#ambientControl{
+  position: fixed !important;
+  top: 12px !important; right: 12px !important; left: auto !important; bottom: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 12px !important;
+  width: auto !important;
+  max-width: min(420px, calc(100vw - 24px)) !important;
+
+  /* главная проблема – высота; принудительно «сжимаем» */
+  height: auto !important;
+  max-height: 64px !important;
+
+  overflow: hidden !important;
+  isolation: isolate !important;
+  contain: layout paint !important;
+
+  z-index: 900 !important;
+  background: rgba(18,18,26,.6) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255,210,138,.35) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35) !important;
+}
+/* если внутри кто-то растягивает блок псевдоэлементами — вырубаем */
+#ambientControl::before,
+#ambientControl::after{ display:none !important; }
+
+/* иногда внутренности делают высоту 100% / абсолюты — обнуляем */
+#ambientControl *{
+  position: static !important;
+  max-height: 48px !important;
+  box-sizing: border-box !important;
+}
+
+/* значок/кнопка в правом верхнем углу — всегда поверх плеера */
+.navbar, .navbar * { position: relative; z-index: 1300 !important; }
+.btn-square, .navbar .navbar-toggler{
+  z-index: 1310 !important;
+  pointer-events: auto !important;
+  mix-blend-mode: normal !important;
+  filter: drop-shadow(0 0 6px rgba(255,210,138,.6));
+}
+
+/* когда открыт лайтбокс/модалка — плеер не мешает */
+.lb-open #ambientControl,
+.modal-open #ambientControl{
+  pointer-events: none !important;
+  opacity: .25 !important;
+  filter: blur(1px) !important;
+}
+
+/* мобильная позиция плеера — вниз-вправо */
+@media (max-width: 576px){
+  #ambientControl{
+    top: auto !important; bottom: 12px !important; right: 12px !important;
+    max-width: min(94vw, 420px) !important;
+  }
+}
