@@ -1,443 +1,483 @@
-/* ===== Theme (auto + manual) ===== */
-const THEME_KEY = 'frenzy_theme';
-function detectAutoTheme() { const h = new Date().getHours(); return (h >= 6 && h < 18) ? 'day' : 'night'; }
-function applyTheme(mode) {
+(() => {
+  'use strict';
+
+  /* ===== Helpers ===== */
+  const $  = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  /* ===== Theme (auto + manual) ===== */
+  const THEME_KEY = 'frenzy_theme';
+  function detectAutoTheme() {
+    const h = new Date().getHours();
+    return (h >= 6 && h < 18) ? 'day' : 'night';
+  }
+  function applyTheme(mode) {
     document.body.classList.remove('theme-day', 'theme-night');
-    document.body.classList.add('theme-' + mode);
-}
-(function initTheme() {
+    document.body.classList.add('theme-' + (mode === 'day' ? 'day' : 'night'));
+  }
+  function initTheme() {
     const saved = localStorage.getItem(THEME_KEY);
     applyTheme(saved || detectAutoTheme());
-})();
-document.getElementById('themeToggle')?.addEventListener('click', () => {
-    const isDay = document.body.classList.contains('theme-day');
-    const next = isDay ? 'night' : 'day';
-    applyTheme(next);
-    localStorage.setItem(THEME_KEY, next);
-});
 
-/* Bootstrap tooltip */
-document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+    const toggle = $('#themeToggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        const isDay = document.body.classList.contains('theme-day');
+        const next = isDay ? 'night' : 'day';
+        applyTheme(next);
+        localStorage.setItem(THEME_KEY, next);
+      });
+    }
+  }
 
-/* ===== Smooth scroll ===== */
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', (e) => {
+  /* ===== Bootstrap tooltip (safe) ===== */
+  function initTooltips() {
+    if (!window.bootstrap || !bootstrap.Tooltip) return;
+    $$('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+  }
+
+  /* ===== Smooth scroll ===== */
+  function initSmoothScroll() {
+    $$('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
         const id = a.getAttribute('href');
-        const target = document.querySelector(id);
+        if (!id || id === '#') return;
+        const target = $(id);
         if (!target) return;
         e.preventDefault();
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     });
-});
+  }
 
-/* ===== Canvas leaves (enable when you add #treeArt later) ===== */
-const canvas = document.getElementById('bgCanvas');
-const ctx = canvas.getContext('2d');
-let W, H, DPR = Math.min(window.devicePixelRatio || 1, 2);
-function resize() {
-    W = canvas.width = Math.floor(innerWidth * DPR); H = canvas.height = Math.floor(innerHeight * DPR);
-    canvas.style.width = innerWidth + "px"; canvas.style.height = innerHeight + "px";
-}
-addEventListener('resize', resize); resize();
+  /* ===== Footer year ===== */
+  function initFooterYear() {
+    const yearEl = $('#year');
+    if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+  }
 
-const leaves = []; let wind = 0.10; let mouseX = innerWidth / 2;
-function spawnLeaf(px, py, boost = false) {
-    leaves.push({
-        x: px * DPR, y: py * DPR,
+  /* ===== Canvas Leaves (efficient) ===== */
+  function initCanvasLeaves() {
+    const canvas = $('#bgCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    // если у человека reduce motion — уважим
+    if (prefersReducedMotion) return;
+
+    // optional: на совсем мелких экранах можно не включать (эконом батареи)
+    // if (window.innerWidth < 420) return;
+
+    let W = 0, H = 0;
+    let DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.floor(window.innerWidth * DPR);
+      H = Math.floor(window.innerHeight * DPR);
+      canvas.width = W;
+      canvas.height = H;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const leaves = [];
+    let wind = 0.10;
+    let mouseX = window.innerWidth / 2;
+
+    function spawnLeaf(px, py, boost = false) {
+      leaves.push({
+        x: px * DPR,
+        y: py * DPR,
         vx: (Math.random() * 0.6 + 0.2) * (boost ? 1.8 : 1),
         vy: (Math.random() * 0.6 + 0.3),
         rot: Math.random() * Math.PI * 2,
         vr: (Math.random() * 0.04 - 0.02),
         hue: 30 + Math.random() * 25,
         life: 0
-    });
-}
-function drawLeaves() {
-    for (let i = leaves.length - 1; i >= 0; i--) {
+      });
+    }
+
+    function drawLeaves() {
+      for (let i = leaves.length - 1; i >= 0; i--) {
         const L = leaves[i];
         L.x += wind + L.vx;
         L.y += L.vy * 2.0 + Math.sin(L.rot) * 0.8;
         L.rot += L.vr + wind * 0.01;
         L.life++;
 
-        ctx.save(); ctx.translate(L.x, L.y); ctx.rotate(L.rot);
-        const w = 14 * DPR, h = 8 * DPR; const grad = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
-        grad.addColorStop(0, `hsl(${L.hue},80%,65%)`); grad.addColorStop(1, `hsl(${L.hue + 18},70%,45%)`);
-        ctx.fillStyle = grad; ctx.beginPath();
-        ctx.moveTo(-w / 2, 0); ctx.quadraticCurveTo(0, -h, w / 2, 0); ctx.quadraticCurveTo(0, h, -w / 2, 0);
-        ctx.fill(); ctx.restore();
+        ctx.save();
+        ctx.translate(L.x, L.y);
+        ctx.rotate(L.rot);
 
-        if (L.x > W + 40 || L.y > H + 40 || L.life > 1200) leaves.splice(i, 1);
+        const w = 14 * DPR, h = 8 * DPR;
+        const grad = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+        grad.addColorStop(0, `hsl(${L.hue},80%,65%)`);
+        grad.addColorStop(1, `hsl(${L.hue + 18},70%,45%)`);
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(-w / 2, 0);
+        ctx.quadraticCurveTo(0, -h, w / 2, 0);
+        ctx.quadraticCurveTo(0, h, -w / 2, 0);
+        ctx.fill();
+        ctx.restore();
+
+        if (L.x > W + 40 || L.y > H + 40 || L.life > 1200) {
+          leaves.splice(i, 1);
+        }
+      }
     }
-}
 
-/* Optional: enable when tree image appears */
-const treeEl = document.getElementById('treeArt');
-if (treeEl) {
-    treeEl.addEventListener('click', () => {
+    // optional hook: tree click / hover, если позже добавишь #treeArt
+    const treeEl = $('#treeArt');
+    if (treeEl) {
+      treeEl.addEventListener('click', () => {
         const r = treeEl.getBoundingClientRect();
-        const bx = r.left + r.width * 0.5, by = r.top + r.height * 0.35;
-        for (let i = 0; i < 24; i++) spawnLeaf(bx + Math.random() * 40 - 20, by + Math.random() * 40 - 20, true);
-    });
-    let shedTimer = 0;
-    treeEl.addEventListener('mousemove', e => {
+        const bx = r.left + r.width * 0.5;
+        const by = r.top + r.height * 0.35;
+        for (let i = 0; i < 24; i++) {
+          spawnLeaf(bx + Math.random() * 40 - 20, by + Math.random() * 40 - 20, true);
+        }
+      });
+
+      let shedTimer = 0;
+      treeEl.addEventListener('mousemove', (e) => {
         const now = performance.now();
-        if (now - shedTimer > 90) { shedTimer = now; spawnLeaf(e.clientX, e.clientY, false); }
-    });
-}
-
-addEventListener('mousemove', e => { mouseX = e.clientX; });
-function loop() {
-    ctx.clearRect(0, 0, W, H);
-    drawLeaves();
-    const targetWind = ((mouseX / innerWidth) - 0.5) * 0.6;
-    wind = 0.98 * wind + 0.02 * targetWind;
-    requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-
-/* Footer year */
-const yearEl = document.getElementById('year');
-if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-
-// ===== Request Slot modal (singleton & safe close) =====
-document.addEventListener("DOMContentLoaded", () => {
-  const items = [...document.querySelectorAll("[data-gallery]")];
-  if (!items.length) return;
-
-  let current = -1;
-  let root = document.getElementById("lb-root");
-  let content;
-
-  function ensureRoot() {
-    if (root) return;
-
-    root = document.createElement("div");
-    root.id = "lb-root";
-    root.style.cssText = `
-      position:fixed; inset:0; z-index:2000;
-      background:rgba(0,0,0,.92);
-      display:none; align-items:center; justify-content:center;
-    `;
-
-    root.innerHTML = `
-      <div style="position:relative; max-width:92vw; max-height:86vh;">
-        <div id="lb-content"></div>
-
-        <button id="lb-prev" aria-label="Previous"
-          style="position:absolute;left:-10px;top:50%;transform:translate(-100%,-50%);
-                 font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem;">
-          ⟨
-        </button>
-        <button id="lb-next" aria-label="Next"
-          style="position:absolute;right:-10px;top:50%;transform:translate(100%,-50%);
-                 font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem;">
-          ⟩
-        </button>
-        <button id="lb-close" aria-label="Close"
-          style="position:absolute;right:0;top:-10px;transform:translateY(-100%);
-                 font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;">
-          ✕
-        </button>
-      </div>
-    `;
-
-    document.body.appendChild(root);
-    content = root.querySelector("#lb-content");
-
-    root.addEventListener("click", (e) => { if (e.target === root) close(); });
-    root.querySelector("#lb-close").addEventListener("click", close);
-    root.querySelector("#lb-prev").addEventListener("click", (e) => { e.stopPropagation(); prev(); });
-    root.querySelector("#lb-next").addEventListener("click", (e) => { e.stopPropagation(); next(); });
-
-    document.addEventListener("keydown", (e) => {
-      if (root.style.display !== "flex") return;
-      if (e.key === "Escape") close();
-      if (e.key === "ArrowLeft") prev();
-      if (e.key === "ArrowRight") next();
-    });
-  }
-
-  function render(i) {
-    const a = items[i];
-    const src = a.getAttribute("href");
-    const type = a.dataset.type || (src?.match(/\.(webm|mp4)$/i) ? "video" : "image");
-
-    content.innerHTML = "";
-
-    if (type === "video") {
-      const v = document.createElement("video");
-      v.src = src;
-      v.controls = true;
-      v.autoplay = true;
-      v.loop = true;
-      v.playsInline = true;
-      v.style.cssText = "max-width:92vw; max-height:86vh; border-radius:12px; box-shadow:0 0 30px rgba(0,0,0,.6);";
-      content.appendChild(v);
-    } else {
-      const img = document.createElement("img");
-      img.src = src;
-      img.alt = a.querySelector("img")?.alt || "Gallery";
-      img.style.cssText = "max-width:92vw; max-height:86vh; border-radius:12px; box-shadow:0 0 30px rgba(0,0,0,.6);";
-      content.appendChild(img);
+        if (now - shedTimer > 90) {
+          shedTimer = now;
+          spawnLeaf(e.clientX, e.clientY, false);
+        }
+      });
     }
-  }
 
-  function open(i) {
-    ensureRoot();
-    current = i;
-    root.style.display = "flex";
-    document.body.classList.add("lb-open");
-    render(current);
-  }
+    window.addEventListener('mousemove', (e) => { mouseX = e.clientX; });
 
-  function close() {
-    if (!root) return;
-    root.style.display = "none";
-    document.body.classList.remove("lb-open");
-    content.innerHTML = "";
-    current = -1;
-  }
+    let rafId = null;
 
-  function prev() {
-    if (current < 0) return;
-    current = (current - 1 + items.length) % items.length;
-    render(current);
-  }
+    function loop() {
+      // если вкладка скрыта — пауза (не жрём ресурс)
+      if (document.hidden) {
+        rafId = null;
+        return;
+      }
 
-  function next() {
-    if (current < 0) return;
-    current = (current + 1) % items.length;
-    render(current);
-  }
+      ctx.clearRect(0, 0, W, H);
+      drawLeaves();
 
-  items.forEach((a, i) => {
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
-      open(i);
+      const targetWind = ((mouseX / window.innerWidth) - 0.5) * 0.6;
+      wind = 0.98 * wind + 0.02 * targetWind;
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function start() {
+      if (rafId) return;
+      rafId = requestAnimationFrame(loop);
+    }
+    function stop() {
+      if (!rafId) return;
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else start();
     });
-  });
-});
 
+    start();
+  }
 
-
-document.addEventListener('DOMContentLoaded', () => {
-    // найдём контейнер галереи и последнюю карточку
-    const grid = document.querySelector('.gallery-grid');
+  /* ===== Gallery Lightbox (singleton) ===== */
+  function initLightbox() {
+    const grid = $('.gallery-grid');
     if (!grid) return;
 
-    const items = grid.querySelectorAll('.gallery-item');
-    if (!items.length) return;
+    const getItems = () => $$('.tile[data-gallery]', grid);
 
-    const last = items[items.length - 1];
+    let current = -1;
+    let root = $('#lb-root');
+    let content, btnPrev, btnNext, btnClose;
+
+    function ensureRoot() {
+      if (root) return;
+
+      root = document.createElement('div');
+      root.id = 'lb-root';
+      root.style.cssText = `
+        position:fixed; inset:0; z-index:2000;
+        background:rgba(0,0,0,.92);
+        display:none; align-items:center; justify-content:center;
+      `;
+
+      root.innerHTML = `
+        <div style="position:relative; max-width:92vw; max-height:86vh;">
+          <div id="lb-content"></div>
+
+          <button id="lb-prev" aria-label="Previous"
+            style="position:absolute;left:-10px;top:50%;transform:translate(-100%,-50%);
+                   font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem;">
+            ⟨
+          </button>
+          <button id="lb-next" aria-label="Next"
+            style="position:absolute;right:-10px;top:50%;transform:translate(100%,-50%);
+                   font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem;">
+            ⟩
+          </button>
+          <button id="lb-close" aria-label="Close"
+            style="position:absolute;right:0;top:-10px;transform:translateY(-100%);
+                   font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;">
+            ✕
+          </button>
+        </div>
+      `;
+
+      document.body.appendChild(root);
+
+      content = $('#lb-content', root);
+      btnPrev = $('#lb-prev', root);
+      btnNext = $('#lb-next', root);
+      btnClose = $('#lb-close', root);
+
+      root.addEventListener('click', (e) => { if (e.target === root) close(); });
+      btnClose.addEventListener('click', close);
+      btnPrev.addEventListener('click', (e) => { e.stopPropagation(); prev(); });
+      btnNext.addEventListener('click', (e) => { e.stopPropagation(); next(); });
+
+      document.addEventListener('keydown', (e) => {
+        if (!root || root.style.display !== 'flex') return;
+        if (e.key === 'Escape') close();
+        if (e.key === 'ArrowLeft') prev();
+        if (e.key === 'ArrowRight') next();
+      });
+    }
+
+    function render(i) {
+      const items = getItems();
+      if (!items.length) return;
+
+      const a = items[i];
+      const src = a.getAttribute('href');
+      const isVideo = src && /\.(webm|mp4)$/i.test(src);
+
+      content.innerHTML = '';
+
+      if (isVideo) {
+        const v = document.createElement('video');
+        v.src = src;
+        v.controls = true;
+        v.autoplay = true;
+        v.loop = true;
+        v.playsInline = true;
+        v.style.cssText = 'max-width:92vw; max-height:86vh; border-radius:12px; box-shadow:0 0 30px rgba(0,0,0,.6);';
+        content.appendChild(v);
+      } else {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = a.querySelector('img')?.alt || 'Gallery';
+        img.style.cssText = 'max-width:92vw; max-height:86vh; border-radius:12px; box-shadow:0 0 30px rgba(0,0,0,.6);';
+        content.appendChild(img);
+      }
+    }
+
+    function open(i) {
+      const items = getItems();
+      if (!items.length) return;
+
+      ensureRoot();
+      current = ((i % items.length) + items.length) % items.length;
+      root.style.display = 'flex';
+      document.body.classList.add('lb-open');
+      render(current);
+    }
+
+    function close() {
+      if (!root) return;
+      root.style.display = 'none';
+      document.body.classList.remove('lb-open');
+      if (content) content.innerHTML = '';
+      current = -1;
+    }
+
+    function prev() {
+      const items = getItems();
+      if (!items.length || current < 0) return;
+      current = (current - 1 + items.length) % items.length;
+      render(current);
+    }
+
+    function next() {
+      const items = getItems();
+      if (!items.length || current < 0) return;
+      current = (current + 1) % items.length;
+      render(current);
+    }
+
+    // Делегация клика по плиткам (один обработчик вместо кучи)
+    grid.addEventListener('click', (e) => {
+      const a = e.target.closest('.tile[data-gallery]');
+      if (!a) return;
+      e.preventDefault();
+
+      const items = getItems();
+      open(items.indexOf(a));
+    });
+  }
+
+  /* ===== "MORE?" overlay on the last tile (optional) ===== */
+  function initMoreOverlay() {
+    const grid = $('.gallery-grid');
+    if (!grid) return;
+
+    const TARGET_HREF = 'https://t.me/AJFplayground'; // <- поменяй, если нужно
+
+    const tiles = $$('.tile', grid);
+    if (!tiles.length) return;
+
+    // снимем старые оверлеи (на всякий)
+    tiles.forEach(tile => {
+      tile.classList.remove('more-overlay');
+      tile.querySelectorAll('.more-btn, .more-link').forEach(n => n.remove());
+    });
+
+    const last = tiles[tiles.length - 1];
+
+    // Если ты НЕ хочешь "БОЛЬШЕ?" — просто закомментируй следующий блок
     last.classList.add('more-overlay');
 
-    // цель перехода: страница или якорь с полной галереей
-    const targetHref = 'gallery.html'; // <-- поменяй на свой маршрут/якорь
-
-    // создаём оверлей: 3 полоски + подпись
-    const link = document.createElement('a');
-    link.href = targetHref;
-    link.className = 'more-link';
-    link.setAttribute('aria-label', 'Открыть полную галерею');
+    // чтобы лайтбокс НЕ открывался на последней плитке — вырубаем data-gallery
+    // (если хочешь, чтобы и на последней был лайтбокс — закомментируй следующую строку)
+    last.removeAttribute('data-gallery');
 
     const btn = document.createElement('div');
     btn.className = 'more-btn';
     btn.innerHTML = `
-    <div class="more-bars" aria-hidden="true">
-      <span></span><span></span><span></span>
-    </div>
-    <div class="more-caption">БОЛЬШЕ?</div>
-  `;
-
+      <div class="more-bars" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="more-caption">БОЛЬШЕ?</div>
+    `;
     last.appendChild(btn);
+
+    const link = document.createElement('a');
+    link.href = TARGET_HREF;
+    link.className = 'more-link';
+    link.setAttribute('aria-label', 'Открыть полную галерею');
     last.appendChild(link);
+  }
 
-    // не даём «клику по картинке» открыть лайтбокс на последней — только наш оверлей
-    const imgLink = last.querySelector('a, [data-gallery], img');
-    if (imgLink && imgLink !== link) {
-        imgLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = targetHref;
-        }, { capture: true });
+  /* ===== Ambient player controls (simple & safe) ===== */
+  function initAmbient() {
+    const audio = $('#ambTrack');
+    const btnPlay = $('#ambToggle');
+    const btnMute = $('#ambMute');
+    const vol = $('#ambVolume');
+    if (!audio || !btnPlay || !btnMute || !vol) return;
+
+    function syncIcons() {
+      const iconPlay = btnPlay.querySelector('i');
+      const iconMute = btnMute.querySelector('i');
+
+      if (iconPlay) {
+        iconPlay.className = audio.paused ? 'bi bi-music-note-beamed' : 'bi bi-pause-fill';
+      }
+      if (iconMute) {
+        iconMute.className = audio.muted ? 'bi bi-volume-mute-fill' : 'bi bi-volume-up';
+      }
     }
-});
-document.addEventListener('DOMContentLoaded', () => {
-    const grid = document.querySelector('.gallery-grid');
-    if (!grid) return;
 
-    const TARGET_HREF = 'gallery.html'; // куда ведёт «БОЛЬШЕ?»
+    btnPlay.addEventListener('click', async () => {
+      try {
+        if (audio.paused) await audio.play();
+        else audio.pause();
+      } catch (e) {
+        // autoplay restrictions — норм, просто не ломаем страницу
+      }
+      syncIcons();
+    });
 
-    // вытаскиваем число из имени файла: work-07.jpg -> 7, img-010.png -> 10
-    const getNum = el => {
-        const href = el.getAttribute('href') || '';
-        const src = el.querySelector('img')?.getAttribute('src') || '';
-        const str = href || src;
-        const m = str.match(/(\d+)(?=\.[a-z]{3,4}$)/i) || str.match(/(?:work|img)[^\d]*(\d+)/i);
-        return m ? parseInt(m[1], 10) : -Infinity;
-    };
+    btnMute.addEventListener('click', () => {
+      audio.muted = !audio.muted;
+      syncIcons();
+    });
 
-    const ensureMoreOverlay = (tile) => {
-        // снять прошлые артефакты
-        tile.classList.add('more-overlay');
-        tile.removeAttribute('data-gallery');
+    vol.addEventListener('input', () => {
+      audio.volume = Math.max(0, Math.min(1, Number(vol.value)));
+      if (audio.muted && audio.volume > 0) audio.muted = false;
+      syncIcons();
+    });
 
-        if (!tile.querySelector('.more-btn')) {
-            const btn = document.createElement('div');
-            btn.className = 'more-btn';
-            btn.innerHTML = `
-        <div class="more-bars"><span></span><span></span><span></span></div>
-        <div class="more-caption">БОЛЬШЕ?</div>
-      `;
-            tile.appendChild(btn);
-
-            const link = document.createElement('a');
-            link.href = TARGET_HREF;
-            link.className = 'more-link';
-            tile.appendChild(link);
-        }
-    };
-
-    const removeMoreOverlay = (tile) => {
-        tile.classList.remove('more-overlay');
-        if (!tile.hasAttribute('data-gallery')) tile.setAttribute('data-gallery', '');
-        tile.querySelectorAll('.more-btn, .more-link').forEach(n => n.remove());
-        // убрать фильтры, если остались
-        const img = tile.querySelector('img');
-        if (img) img.style.filter = '';
-    };
-
-    const resortAndOverlay = () => {
-        const tiles = Array.from(grid.querySelectorAll('.tile'));
-        if (!tiles.length) return;
-
-        // сортировка по убыванию чисел в именах
-        tiles.sort((a, b) => getNum(b) - getNum(a));
-
-        // сбросим оверлей у всех
-        tiles.forEach(removeMoreOverlay);
-
-        // перерисовать порядок
-        grid.append(...tiles);
-
-        // навесить «БОЛЬШЕ?» на последнюю
-        ensureMoreOverlay(tiles[tiles.length - 1]);
-    };
-
-    // первичная раскладка
-    resortAndOverlay();
-
-    // если ты динамически добавишь новую плитку — пересоберём
-    const mo = new MutationObserver(() => resortAndOverlay());
-    mo.observe(grid, { childList: true });
-
-});
-// --- LIGHTBOX: singleton, no duplicates, no double-init ---
-(() => {
-  if (window.__LB_INIT__) return;               // защита от повторной инициализации
-  window.__LB_INIT__ = true;
-
-  const grid = document.querySelector('.gallery-grid');
-  if (!grid) return;
-
-  const links = () => [...grid.querySelectorAll('.tile[data-gallery]')];
-
-  let current = -1;
-  let root = document.getElementById('lb-root');  // уже есть? — переиспользуем
-  if (!root) {
-    root = document.createElement('div');
-    root.id = 'lb-root';
-    root.style.cssText = `
-      position:fixed; inset:0; z-index:2000; display:none;
-      background:rgba(0,0,0,.92); align-items:center; justify-content:center;
-    `;
-    root.innerHTML = `
-      <img id="lb-img" style="max-width:90%;max-height:85%;border-radius:12px;box-shadow:0 0 30px rgba(0,0,0,.6)">
-      <button id="lb-prev" aria-label="prev" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:32px;color:#fff;background:none;border:none;cursor:pointer;">⟨</button>
-      <button id="lb-next" aria-label="next" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:32px;color:#fff;background:none;border:none;cursor:pointer;">⟩</button>
-      <button id="lb-close" aria-label="close" style="position:absolute;right:18px;top:12px;font-size:28px;color:#fff;background:none;border:none;cursor:pointer;">✕</button>
-    `;
-    document.body.appendChild(root);
+    // init
+    audio.volume = Math.max(0, Math.min(1, Number(vol.value)));
+    syncIcons();
   }
 
-  const img   = root.querySelector('#lb-img');
-  const btnL  = root.querySelector('#lb-prev');
-  const btnR  = root.querySelector('#lb-next');
-  const btnX  = root.querySelector('#lb-close');
+  /* ===== Init (DOM ready) ===== */
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    initTooltips();
+    initSmoothScroll();
+    initFooterYear();
 
-  function openAt(i){
-    const arr = links();
-    if (!arr.length) return;
-    current = (i + arr.length) % arr.length;
-    img.src = arr[current].getAttribute('href');
-    root.style.display = 'flex';
-    document.body.classList.add('lb-open');
-  }
-  function close(){
-    root.style.display = 'none';
-    document.body.classList.remove('lb-open');
-    img.src = '';
-    current = -1;
-  }
-  function prev(){ if (current>=0) openAt(current-1); }
-  function next(){ if (current>=0) openAt(current+1); }
-
-  // клики: фон закрывает, внутренние элементы не всплывают
-  root.addEventListener('click', (e)=>{ if (e.target === root) close(); });
-  [img, btnL, btnR, btnX].forEach(el => el.addEventListener('click', e => e.stopPropagation()));
-  btnL.addEventListener('click', prev);
-  btnR.addEventListener('click', next);
-  btnX.addEventListener('click', close);
-
-  // клавиатура
-  document.addEventListener('keydown', (e)=>{
-    if (root.style.display === 'flex'){
-      if (e.key === 'Escape') close();
-      if (e.key === 'ArrowLeft') prev();
-      if (e.key === 'ArrowRight') next();
-    }
+    initCanvasLeaves();
+    initLightbox();
+    initMoreOverlay();
+    initAmbient();
   });
-
-  // делегируем клик по превью (и гасим чужие обработчики)
-  grid.addEventListener('click', (e)=>{
-    const a = e.target.closest('.tile[data-gallery]');
-    if (!a) return;
-    e.preventDefault();
-    e.stopImmediatePropagation(); // <-- не даём другим «лайтбоксам» тоже открыться
-    const arr = links();
-    openAt(arr.indexOf(a));
-  }, true); // capture: true — перехват раньше сторонних скриптов
-
-  // если у тебя есть MutationObserver, он не должен снова инициализировать лайтбокс —
-  // наш код защищён флагом __LB_INIT__
 
 })();
 
-document.addEventListener('DOMContentLoaded', () => {
-  const ac = document.getElementById('ambientControl');
-  if (!ac) return;
+/* ===== Request Slot Modal (Bootstrap) ===== */
+function initRequestModal() {
+  const openBtn = document.getElementById('openRequestModal');
+  const modalEl = document.getElementById('requestModal');
+  const ta = document.getElementById('slotMsg');
+  const mailBtn = document.getElementById('sendEmail');
 
-  function clampPlayer(){
-    const r = ac.getBoundingClientRect();
-    if (r.height > 90) {
-      // кого-то занесло — жёстко зажимаем
-      ac.style.height = '64px';
-      ac.style.maxHeight = '64px';
-      // убираем абсолютные фоны внутри
-      [...ac.children].forEach(ch => {
-        const cs = getComputedStyle(ch);
-        if (cs.position === 'absolute' || cs.height === '100%' || cs.inset !== 'auto') {
-          ch.style.position = 'static';
-          ch.style.inset = 'auto';
-          ch.style.height = 'auto';
-          ch.style.maxHeight = '48px';
-        }
-      });
-    }
+  if (!openBtn || !modalEl || !ta || !mailBtn) return;
+
+  // bootstrap должен быть загружен
+  if (!window.bootstrap || !bootstrap.Modal) return;
+
+  const EMAIL = 'anonimanonimov820@gmail.com';
+  const SUBJECT = 'Коммишн — запрос слота';
+
+  const bsModal = new bootstrap.Modal(modalEl, { keyboard: true });
+
+  function template() {
+    const d = new Date().toLocaleDateString();
+    return [
+      'Привет! Хочу забронировать слот на коммишн 😊',
+      '',
+      'Имя / ник: ',
+      'Контакт (TG/почта): ',
+      'Идея / персонажи: ',
+      'Рефы: (ссылки или прикреплю позже)',
+      'Формат: (аватар / полурост / сцена)',
+      'Срок / дедлайн: ',
+      'Бюджет: ',
+      '',
+      `Отправлено со страницы Frenzy • ${d}`
+    ].join('\n');
   }
-  clampPlayer();
-  window.addEventListener('resize', clampPlayer);
-  // если у тебя ещё есть мутации DOM — реагируем
-  new MutationObserver(clampPlayer).observe(ac, { attributes:true, childList:true, subtree:true });
-});
+
+  function updateMailLink() {
+    const body = ta.value || '';
+    mailBtn.href = `mailto:${EMAIL}?subject=${encodeURIComponent(SUBJECT)}&body=${encodeURIComponent(body)}`;
+  }
+
+  openBtn.addEventListener('click', () => {
+    ta.value = template();
+    updateMailLink();
+    bsModal.show();
+  });
+
+  ta.addEventListener('input', updateMailLink);
+  updateMailLink();
+}

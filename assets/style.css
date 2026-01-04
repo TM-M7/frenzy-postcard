@@ -110,7 +110,7 @@ a.link::after{
   opacity:0; transform:translateY(4px); transition:.25s; border-radius:999px;
 }
 a.link:hover::after{ opacity:1; transform:none; }
-.text-dim{ color: var(--fg-dim) !important; }
+
 
 /* Smartphone-like gallery */
 .gallery-grid{
