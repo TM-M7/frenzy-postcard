@@ -105,8 +105,8 @@
 
             <!-- актуал из ТГ (пока статич. фото) -->
             <div class="latest-wrap">
-                <a href="assets/img/latest.jpg" class="latest-card d-block" data-gallery>
-                    <img src="assets/img/latest.jpg" alt="Latest from TG" loading="lazy">
+                <a href="assets/img/latest.webp" class="latest-card d-block" data-gallery>
+                    <img src="assets/img/latest.webp" alt="Latest from TG" loading="lazy">
                     <span class="latest-label">Latest from TG</span>
                 </a>
             </div>
@@ -319,7 +319,7 @@
                             <li class="mb-2"><a class="link" href="#" target="_blank" rel="noopener"><i
                                         class="bi bi-instagram me-2"></i>Instagram</a>
                             </li>
-                            <li class="mb-2"><a class="link" href="#" target="_blank" rel="noopener"><i
+                            <li class="mb-2"><a class="link" href="https://t.me/Frenzy_Commision_bot" target="_blank" rel="noopener"><i
                                         class="bi bi-telegram me-2"></i>Telegram</a></li>
                         </ul>
                     </div>
@@ -328,8 +328,8 @@
                     <div class="glass rounded-4 p-4 h-100">
                         <h3 class="h5 fw-bold">Contact</h3>
                         <p class="text-dim mt-2 mb-2">DMs open or email:</p>
-                        <a class="link" href="mailto:hui.asam3@gmail.com"><i
-                                class="bi bi-envelope me-2"></i>asasasassammmm6663@gmail.com</a>
+                        <a class="link" href="mailto:anonimanonimov820@gmail.com"><i
+                                class="bi bi-envelope me-2"></i>anonimanonimov820@gmail.com</a>
                     </div>
                 </div>
             </div>
@@ -363,11 +363,6 @@
                             style="min-height:180px;border-radius:12px;background:rgba(255,255,255,.06);color:var(--fg);"></textarea>
 
                         <div class="d-flex flex-wrap gap-2 mt-3">
-                            <button id="copyMsg" class="btn btn-light-subtle border rounded-4">Скопировать</button>
-                            <!-- tg share: откроет телеграм с этим текстом -->
-                            <a id="sendTg" class="btn btn-outline-light rounded-4" target="_blank" rel="noopener">
-                                <i class="bi bi-telegram me-1"></i> В Telegram
-                            </a>
                             <!-- email: subject+body -->
                             <a id="sendEmail" class="btn btn-outline-light rounded-4" target="_blank" rel="noopener">
                                 <i class="bi bi-envelope me-1"></i> На Email
@@ -402,7 +397,7 @@
         <input id="ambVolume" type="range" min="0" max="1" step="0.01" value="0.5" style="width:90px">
     </div>
 
-    <audio id="ambTrack" src="assets/data/ambient.mp3" preload="auto" loop autoplay playsinline></audio>
+    <audio id="ambTrack" src="assets/data/ambient.mp3" preload="auto" loop playsinline></audio>
 
     <div id="ambHint" class="position-fixed top-0 end-0 mt-5 me-5" style="z-index:1200; display:none;">
         <div class="p-3 glass rounded-4 text-center" style="max-width:220px;">
@@ -419,69 +414,6 @@
     <!-- Your JS -->
     <script src="assets/main.js" defer></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const galleryLinks = [...document.querySelectorAll("[data-gallery]")];
-            let currentIndex = -1;
-            let modal, img;
-
-            function openModal(index) {
-                currentIndex = index;
-                modal = document.createElement("div");
-                modal.style.cssText = `
-      position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);
-      display:flex;align-items:center;justify-content:center;flex-direction:column;
-    `;
-                modal.innerHTML = `
-      <img src="${galleryLinks[index].getAttribute("href")}" 
-           style="max-width:90%;max-height:85%;border-radius:12px;box-shadow:0 0 30px rgba(0,0,0,.6)">
-      <div style="position:absolute;top:50%;left:0;right:0;display:flex;justify-content:space-between;pointer-events:none;">
-        <button id="prevImg" style="pointer-events:auto;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem">⟨</button>
-        <button id="nextImg" style="pointer-events:auto;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem">⟩</button>
-      </div>
-      <button id="closeModal" style="position:absolute;top:15px;right:20px;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;">✕</button>
-    `;
-                document.body.appendChild(modal);
-                img = modal.querySelector("img");
-                modal.addEventListener("click", (e) => {
-                    if (e.target === modal) closeModal(); // клик вне картинки закрывает
-                });
-                modal.querySelector("#closeModal").onclick = closeModal;
-                modal.querySelector("#prevImg").onclick = showPrev;
-                modal.querySelector("#nextImg").onclick = showNext;
-                document.addEventListener("keydown", keyHandler);
-            }
-
-            function closeModal() {
-                modal.remove();
-                document.removeEventListener("keydown", keyHandler);
-                currentIndex = -1;
-            }
-
-            function showPrev() {
-                if (currentIndex > 0) openReplace(currentIndex - 1);
-            }
-            function showNext() {
-                if (currentIndex < galleryLinks.length - 1) openReplace(currentIndex + 1);
-            }
-            function openReplace(index) {
-                currentIndex = index;
-                img.src = galleryLinks[index].getAttribute("href");
-            }
-
-            function keyHandler(e) {
-                if (e.key === "Escape") closeModal();
-                if (e.key === "ArrowLeft") showPrev();
-                if (e.key === "ArrowRight") showNext();
-            }
-
-            galleryLinks.forEach((link, i) => {
-                link.addEventListener("click", e => {
-                    e.preventDefault();
-                    openModal(i);
-                });
-            });
-        });
-
         (function () {
             const openBtn = document.getElementById('openRequestModal');
             const modalEl = document.getElementById('requestModal');
@@ -493,9 +425,9 @@
             const tgBtn = document.getElementById('sendTg');
             const mailBtn = document.getElementById('sendEmail');
 
-            const TG_USERNAME = 'Vex_Sun'; // <- её @
+            const TG_USERNAME = 'Frenzy_Commision_bot'; // <- её @
             const TG_CHAT_URL = `https://t.me/${TG_USERNAME}`;
-            const EMAIL = 'HUIiLOVE@gmail.com';   // <- твоя почта
+            const EMAIL = 'anonimanonimov820@gmail.com';   // <- твоя почта
 
             function template() {
                 const d = new Date().toLocaleDateString();
@@ -554,84 +486,6 @@
                 tgBtn.after(extra);
             }
         })();
-        document.addEventListener("DOMContentLoaded", () => {
-            const galleryLinks = [...document.querySelectorAll("[data-gallery]")];
-            let currentIndex = -1, modal, img;
-
-            function buildModal() {
-                modal = document.createElement("div");
-                modal.style.cssText = `
-      position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);
-      display:flex;align-items:center;justify-content:center;flex-direction:column;
-    `;
-                modal.innerHTML = `
-      <img id="lb-img"
-           style="max-width:90%;max-height:85%;border-radius:12px;box-shadow:0 0 30px rgba(0,0,0,.6)">
-      <div style="position:absolute;top:50%;left:0;right:0;display:flex;justify-content:space-between;pointer-events:none;">
-        <button id="prevImg" style="pointer-events:auto;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem">⟨</button>
-        <button id="nextImg" style="pointer-events:auto;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem">⟩</button>
-      </div>
-      <button id="closeModal" style="position:absolute;top:15px;right:20px;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;">✕</button>
-    `;
-                document.body.appendChild(modal);
-                img = modal.querySelector("#lb-img");
-
-                // — единичный клик по фону закрывает
-                modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-
-                // — клики внутри не всплывают (чтобы не требовалось «два раза»)
-                img.addEventListener("click", (e) => e.stopPropagation());
-                modal.querySelector("#prevImg").addEventListener("click", (e) => { e.stopPropagation(); showPrev(); });
-                modal.querySelector("#nextImg").addEventListener("click", (e) => { e.stopPropagation(); showNext(); });
-                modal.querySelector("#closeModal").addEventListener("click", (e) => { e.stopPropagation(); closeModal(); });
-
-                // — клавиатура
-                document.addEventListener("keydown", keyHandler);
-
-                // — тач-свайпы
-                let sx = 0, dx = 0;
-                modal.addEventListener("touchstart", (e) => { sx = e.changedTouches[0].clientX; });
-                modal.addEventListener("touchend", (e) => {
-                    dx = e.changedTouches[0].clientX - sx;
-                    if (Math.abs(dx) > 45) (dx > 0 ? showPrev() : showNext());
-                });
-            }
-
-            function openModal(index) {
-                currentIndex = index;
-                buildModal();
-                img.src = galleryLinks[currentIndex].getAttribute("href");
-            }
-
-            function closeModal() {
-                if (!modal) return;
-                modal.remove();
-                document.removeEventListener("keydown", keyHandler);
-                modal = null; currentIndex = -1;
-            }
-
-            // — зацикливание (loop)
-            function showPrev() {
-                if (currentIndex < 0) return;
-                currentIndex = (currentIndex - 1 + galleryLinks.length) % galleryLinks.length;
-                img.src = galleryLinks[currentIndex].getAttribute("href");
-            }
-            function showNext() {
-                if (currentIndex < 0) return;
-                currentIndex = (currentIndex + 1) % galleryLinks.length;
-                img.src = galleryLinks[currentIndex].getAttribute("href");
-            }
-
-            function keyHandler(e) {
-                if (e.key === "Escape") closeModal();
-                if (e.key === "ArrowLeft") showPrev();
-                if (e.key === "ArrowRight") showNext();
-            }
-
-            galleryLinks.forEach((link, i) => {
-                link.addEventListener("click", (e) => { e.preventDefault(); openModal(i); });
-            });
-        });
     </script>
 
 

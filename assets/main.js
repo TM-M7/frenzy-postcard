@@ -30,137 +30,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     });
 });
 
-/* ===== Lightbox ===== */
-(function lightboxInit() {
-    const open = (url) => {
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position:fixed;inset:0;z-index:1055;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:24px;';
-        modal.innerHTML = `<img src="${url}" alt="" style="max-width:96%;max-height:90%;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6)">`;
-        const close = () => { modal.remove(); document.removeEventListener('keydown', onEsc); };
-        const onEsc = (ev) => { if (ev.key === 'Escape') close(); };
-        modal.addEventListener('click', close);
-        document.addEventListener('keydown', onEsc);
-        document.body.appendChild(modal);
-    };
-    document.querySelectorAll('[data-gallery]').forEach(a => {
-        a.addEventListener('click', (e) => { e.preventDefault(); open(a.getAttribute('href')); });
-    });
-})();
-
-// ===== Ambient (единый трек + контрол справа) =====
-document.addEventListener('DOMContentLoaded', async () => {
-    const track = document.getElementById('ambTrack');
-    const btnPlay = document.getElementById('ambToggle');
-    const btnMute = document.getElementById('ambMute');
-    const vol = document.getElementById('ambVolume');
-    if (!track || !btnPlay || !btnMute || !vol) return;
-
-    // ——— начальные настройки ———
-    // стартуем ГАРАНТИРОВАННО mute
-    track.muted = true;
-
-    // восстановим громкость
-    const savedVol = localStorage.getItem('amb_vol');
-    vol.value = savedVol !== null ? savedVol : '0.5';
-    track.volume = +vol.value;
-
-    // сохраним, что мы стартуем в mute
-    localStorage.setItem('amb_muted', '1');
-
-    // попытка автозапуска (будет играть без звука)
-    try { await track.play(); } catch { }  // молча, т.к. muted autoplay разрешён
-
-    updateIcons();
-
-    // Play/Pause
-    btnPlay.addEventListener('click', async () => {
-        if (track.paused) { try { await track.play(); } catch { } }
-        else { track.pause(); }
-        updateIcons();
-    });
-
-    // Mute/Unmute
-    btnMute.addEventListener('click', () => {
-        track.muted = !track.muted;
-        localStorage.setItem('amb_muted', track.muted ? '1' : '0');
-        updateIcons();
-    });
-
-    // Volume
-    vol.addEventListener('input', () => {
-        track.volume = +vol.value;
-        localStorage.setItem('amb_vol', vol.value);
-    });
-
-    function updateIcons() {
-        btnPlay.innerHTML = track.paused
-            ? '<i class="bi bi-music-note-beamed"></i>'
-            : '<i class="bi bi-pause-fill"></i>';
-
-        btnMute.innerHTML = track.muted
-            ? '<i class="bi bi-volume-mute"></i>'
-            : '<i class="bi bi-volume-up"></i>';
-    }
-});
-
-
-// === Подсказка у амбиента: светлая стрелка и "Окей" ===
-function showAmbHint() {
-    // если уже отрисована — не дублируем
-    if (document.getElementById('ambHint')) return;
-
-    const ctrl = document.getElementById('ambientControl');
-    const track = document.getElementById('ambTrack');
-    if (!ctrl || !track) return;
-
-    const hint = document.createElement('div');
-    hint.id = 'ambHint';
-    hint.innerHTML = `
-    <div>Здесь можно включить <b>атмосферу</b> 🌬️</div>
-    <button class="btn-ok" type="button">Окей</button>
-    <div class="arrow"></div>
-  `;
-    document.body.appendChild(hint);
-
-    // позиционируем возле блока управления
-    function place() {
-        const r = ctrl.getBoundingClientRect();
-        hint.style.top = (window.scrollY + r.bottom + 10) + 'px';
-        hint.style.left = (window.scrollX + r.right - 220) + 'px';
-    }
-    place();
-    window.addEventListener('resize', place);
-
-    const close = () => hint.remove();
-    hint.querySelector('.btn-ok').addEventListener('click', close);
-
-    // закрыть по клику вне
-    setTimeout(() => {
-        document.addEventListener('click', function onDoc(e) {
-            if (!hint.contains(e.target) && !ctrl.contains(e.target)) {
-                close(); document.removeEventListener('click', onDoc);
-            }
-        });
-    }, 0);
-
-    // если пользователь нажал play/mute — тоже убрать
-    document.getElementById('ambToggle')?.addEventListener('click', close, { once: true });
-    document.getElementById('ambMute')?.addEventListener('click', close, { once: true });
-}
-
-// Показываем КАЖДУЮ загрузку (без localStorage), если трек ещё молчит
-window.addEventListener('load', () => {
-    const t = document.getElementById('ambTrack');
-    if (!t) return;
-    // если браузер заблокировал автоплей — трек будет paused или muted
-    if (t.muted || t.volume === 0) {
-        setTimeout(showAmbHint, 700);
-    }
-});
-
-
-
-
 /* ===== Canvas leaves (enable when you add #treeArt later) ===== */
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
@@ -233,113 +102,124 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 
 // ===== Request Slot modal (singleton & safe close) =====
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.__REQ_SLOT_INIT__) return;     // защита от двойного подключения
-  window.__REQ_SLOT_INIT__ = true;
+document.addEventListener("DOMContentLoaded", () => {
+  const items = [...document.querySelectorAll("[data-gallery]")];
+  if (!items.length) return;
 
-  const openBtn = document.getElementById('openRequestModal');
-  const modalEl = document.getElementById('requestModal');
-  if (!openBtn || !modalEl || !window.bootstrap) return;
+  let current = -1;
+  let root = document.getElementById("lb-root");
+  let content;
 
-  // Берём существующий или создаём один-единственный инстанс
-  const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl, {
-    backdrop: true,
-    keyboard: true,
-    focus: true
-  });
+  function ensureRoot() {
+    if (root) return;
 
-  const ta      = document.getElementById('slotMsg');
-  const copyBtn = document.getElementById('copyMsg');
-  const tgBtn   = document.getElementById('sendTg');
-  const mailBtn = document.getElementById('sendEmail');
+    root = document.createElement("div");
+    root.id = "lb-root";
+    root.style.cssText = `
+      position:fixed; inset:0; z-index:2000;
+      background:rgba(0,0,0,.92);
+      display:none; align-items:center; justify-content:center;
+    `;
 
-  const TG_USERNAME = 'Vex_Sun';
-  const TG_CHAT_URL = `https://t.me/${TG_USERNAME}`;
-  const TG_SHARE = txt => `https://t.me/share/url?url=&text=${encodeURIComponent(txt)}`;
+    root.innerHTML = `
+      <div style="position:relative; max-width:92vw; max-height:86vh;">
+        <div id="lb-content"></div>
 
-  function template() {
-    const d = new Date().toLocaleDateString();
-    return [
-      'Привет! Хочу забронировать слот на коммишн 😊',
-      '',
-      'Имя / ник: ',
-      'Контакт (TG/почта): ',
-      'Идея / персонажи: ',
-      'Рефы: (ссылки или прикреплю позже)',
-      'Формат: (аватар / полурост / сцена)',
-      'Срок / дедлайн: ',
-      'Бюджет: ',
-      '',
-      `Отправлено со страницы Frenzy • ${d}`
-    ].join('\n');
-  }
+        <button id="lb-prev" aria-label="Previous"
+          style="position:absolute;left:-10px;top:50%;transform:translate(-100%,-50%);
+                 font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem;">
+          ⟨
+        </button>
+        <button id="lb-next" aria-label="Next"
+          style="position:absolute;right:-10px;top:50%;transform:translate(100%,-50%);
+                 font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;padding:1rem;">
+          ⟩
+        </button>
+        <button id="lb-close" aria-label="Close"
+          style="position:absolute;right:0;top:-10px;transform:translateY(-100%);
+                 font-size:2rem;color:#fff;background:none;border:none;cursor:pointer;">
+          ✕
+        </button>
+      </div>
+    `;
 
-  function updateLinks() {
-    const txt = ta?.value || '';
-    if (tgBtn) tgBtn.href = TG_SHARE(txt);
-    if (mailBtn) {
-      const subject = 'Коммишн — запрос слота';
-      mailBtn.href = `mailto:hello@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(txt)}`;
-    }
-  }
+    document.body.appendChild(root);
+    content = root.querySelector("#lb-content");
 
-  // Открытие модалки
-  openBtn.addEventListener('click', () => {
-    if (ta) ta.value = template();
-    updateLinks();
-    bsModal.show();
-  });
+    root.addEventListener("click", (e) => { if (e.target === root) close(); });
+    root.querySelector("#lb-close").addEventListener("click", close);
+    root.querySelector("#lb-prev").addEventListener("click", (e) => { e.stopPropagation(); prev(); });
+    root.querySelector("#lb-next").addEventListener("click", (e) => { e.stopPropagation(); next(); });
 
-  ta?.addEventListener('input', updateLinks);
-
-  // Копировать
-  copyBtn?.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(ta?.value || '');
-      copyBtn.textContent = 'Скопировано!';
-      setTimeout(() => (copyBtn.textContent = 'Скопировать'), 1200);
-    } catch {
-      alert('Не удалось скопировать :(');
-    }
-  });
-
-  // Добавляем «Открыть чат @…» только один раз
-  if (!document.getElementById('openTgChat') && tgBtn) {
-    tgBtn.insertAdjacentHTML(
-      'afterend',
-      `<a id="openTgChat" class="btn btn-light-subtle border rounded-4" target="_blank" rel="noopener">
-         Открыть чат @${TG_USERNAME}
-       </a>`
-    );
-    document.getElementById('openTgChat')?.addEventListener('click', async (e) => {
-      try { await navigator.clipboard.writeText(ta?.value || ''); } catch {}
-      e.currentTarget.href = TG_CHAT_URL;
+    document.addEventListener("keydown", (e) => {
+      if (root.style.display !== "flex") return;
+      if (e.key === "Escape") close();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
     });
   }
 
-  // --- КРЕСТИК: закрываем без глюков ---
-  const closeBtn = modalEl.querySelector('[data-bs-dismiss="modal"], .btn-close');
-  if (closeBtn) {
-    closeBtn.setAttribute('type', 'button'); // на всякий — не submit
-    const forceClose = (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-      bsModal.hide();
-    };
-    // слушаем несколько событий и в capture-фазе — приоритет над чужими
-    ['click','pointerup','touchend','mousedown'].forEach(t =>
-      closeBtn.addEventListener(t, forceClose, { capture: true })
-    );
+  function render(i) {
+    const a = items[i];
+    const src = a.getAttribute("href");
+    const type = a.dataset.type || (src?.match(/\.(webm|mp4)$/i) ? "video" : "image");
+
+    content.innerHTML = "";
+
+    if (type === "video") {
+      const v = document.createElement("video");
+      v.src = src;
+      v.controls = true;
+      v.autoplay = true;
+      v.loop = true;
+      v.playsInline = true;
+      v.style.cssText = "max-width:92vw; max-height:86vh; border-radius:12px; box-shadow:0 0 30px rgba(0,0,0,.6);";
+      content.appendChild(v);
+    } else {
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = a.querySelector("img")?.alt || "Gallery";
+      img.style.cssText = "max-width:92vw; max-height:86vh; border-radius:12px; box-shadow:0 0 30px rgba(0,0,0,.6);";
+      content.appendChild(img);
+    }
   }
 
-  // Страховка от «кучи бекдропов» (если вдруг страница уже успела насоздавать):
-  modalEl.addEventListener('shown.bs.modal', () => {
-    const backs = document.querySelectorAll('.modal-backdrop');
-    // оставим только последний
-    backs.forEach((el, i) => { if (i < backs.length - 1) el.remove(); });
+  function open(i) {
+    ensureRoot();
+    current = i;
+    root.style.display = "flex";
+    document.body.classList.add("lb-open");
+    render(current);
+  }
+
+  function close() {
+    if (!root) return;
+    root.style.display = "none";
+    document.body.classList.remove("lb-open");
+    content.innerHTML = "";
+    current = -1;
+  }
+
+  function prev() {
+    if (current < 0) return;
+    current = (current - 1 + items.length) % items.length;
+    render(current);
+  }
+
+  function next() {
+    if (current < 0) return;
+    current = (current + 1) % items.length;
+    render(current);
+  }
+
+  items.forEach((a, i) => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      open(i);
+    });
   });
 });
+
 
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -2,8 +2,8 @@
 :root{
   --fg:#ffffff;           /* базовый текст: белый */
   --fg-dim:#e0e0ff;       /* второстепенный текст: светлый серо-голубой */
-  --link-accent:#ffd28a;  /* акцент: жёлтый */
-  --link-accent-2:#34d1bb;/* акцент: бирюзовый */
+  --link-accent:#ffb14a;  /* accent: campfire orange */  /* акцент: жёлтый */
+  --link-accent-2:#42d6d1;/* accent: starlight teal *//* акцент: бирюзовый */
   --glass: rgba(18, 22, 40, 0.55);
   --glass-border: rgba(255,255,255,0.10);
 }
@@ -11,8 +11,8 @@
 body.theme-day{
   --fg:#101420;           /* чёрный для дня */
   --fg-dim:#3c465a;       /* тёмно-серый для дня */
-  --link-accent:#ffb763;
-  --link-accent-2:#2fb8a0;
+  --link-accent:#ff9f3a;  /* accent: campfire orange */
+  --link-accent-2:#2fb8ff;/* accent: starlight teal */
   --glass: rgba(255,255,255,0.65);
   --glass-border: rgba(0,0,0,0.06);
 }
@@ -70,8 +70,8 @@ h2::after {
   border-radius: 99px;
 }
 .price {
-  color: #ffd28a !important;
-  text-shadow: 0 0 6px rgba(255,210,138,.6);
+  color: var(--link-accent) !important;
+  text-shadow: 0 0 6px rgba(255,177,74,.6);
 }
 
 
@@ -100,8 +100,8 @@ h1,h2,h3{ font-family:"Playfair Display", serif; letter-spacing:.2px; }
 }
 a.link{ position:relative; color:inherit; text-decoration:none; }
 a.link:hover {
-  color: #ffd28a !important;
-  text-shadow: 0 0 6px rgba(255,210,138,.6);
+  color: var(--link-accent) !important;
+  text-shadow: 0 0 6px rgba(255,177,74,.6);
 }
 
 a.link::after{
@@ -194,7 +194,7 @@ body.theme-day .accordion.glass .accordion-button{
   color: var(--fg);
 }
 .accordion.glass .accordion-button:focus{
-  box-shadow: 0 0 0 .2rem rgba(255,210,138,.25);
+  box-shadow: 0 0 0 .2rem rgba(255,177,74,.25);
   border-color: color-mix(in oklab, var(--link-accent) 40%, transparent);
 }
 .accordion.glass .accordion-body{
@@ -234,8 +234,8 @@ body.theme-night .form-control{
   border: 1px solid rgba(255,255,255,.14);
 }
 body.theme-night .form-control:focus{
-  border-color: rgba(255,210,138,.6);
-  box-shadow: 0 0 0 .2rem rgba(255,210,138,.25);
+  border-color: rgba(255,177,74,.6);
+  box-shadow: 0 0 0 .2rem rgba(255,177,74,.25);
 }
 
 #ambientControl {
@@ -269,23 +269,23 @@ body.theme-day #ambientControl {
   width:0; height:0;
   border-left:12px solid transparent;
   border-right:12px solid transparent;
-  border-bottom:20px solid #ffd200; /* ярко-жёлтый */
-  filter: drop-shadow(0 0 6px #ffd200) drop-shadow(0 0 14px #ffb700);
+  border-bottom:20px solid var(--link-accent); /* ярко-жёлтый */
+  filter: drop-shadow(0 0 6px var(--link-accent)) drop-shadow(0 0 14px #ff8f2a);
   animation: glowArrow 1.2s infinite alternate;
 }
 #ambHint .btn-ok{
   margin-top:10px;
   padding:.3rem .8rem;
   border-radius:999px;
-  border:1px solid #ffd200;
-  color:#ffd200;
+  border:1px solid var(--link-accent);
+  color:var(--link-accent);
   background:transparent;
 }
 #ambHint .btn-ok:hover{ background:rgba(255,210,0,.12); }
 
 @keyframes glowArrow{
-  from { filter: drop-shadow(0 0 6px #ffd200) drop-shadow(0 0 14px #ffb700); }
-  to   { filter: drop-shadow(0 0 12px #ffea4d) drop-shadow(0 0 22px #ffd200); }
+  from { filter: drop-shadow(0 0 6px var(--link-accent)) drop-shadow(0 0 14px #ff8f2a); }
+  to   { filter: drop-shadow(0 0 12px #ffd37a) drop-shadow(0 0 22px var(--link-accent)); }
 }
 @keyframes fadeIn{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
 
@@ -302,15 +302,15 @@ body.theme-day #ambientControl {
 
 /* === Жёлтый гамбургер и рамка === */
 .navbar-toggler{
-  border-color: #ffd28a !important;
-  box-shadow: 0 0 10px rgba(255,210,138,.25);
+  border-color: var(--link-accent) !important;
+  box-shadow: 0 0 10px rgba(255,177,74,.25);
 }
-.navbar-toggler:focus{ box-shadow: 0 0 0 .2rem rgba(255,210,138,.25); }
+.navbar-toggler:focus{ box-shadow: 0 0 0 .2rem rgba(255,177,74,.25); }
 
 /* кастомная иконка гамбургера с жёлтыми линиями */
 .navbar-toggler-icon{
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23ffd28a' stroke-width='2' stroke-linecap='round' d='M4 7h22M4 15h22M4 23h22'/%3E%3/svg%3E") !important;
-  filter: drop-shadow(0 0 6px rgba(255,210,138,.6));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23ffb14a' stroke-width='2' stroke-linecap='round' d='M4 7h22M4 15h22M4 23h22'/%3E%3/svg%3E") !important;
+  filter: drop-shadow(0 0 6px rgba(255,177,74,.6));
 }
 
 /* опционально — цвет выпавшего меню “под сайт” */
@@ -327,7 +327,7 @@ body.theme-day .navbar .collapse{
 .btn-square {
   width: 38px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
   border-radius: 10px; border: 1px solid rgba(255,255,255,.2);
-  background: linear-gradient(180deg, rgba(255,210,138,.25), rgba(255,210,138,.08));
+  background: linear-gradient(180deg, rgba(255,177,74,.25), rgba(255,177,74,.08));
 }
 .btn-square i{
   font-style: normal; font-weight: 800; line-height: 1;
@@ -355,7 +355,7 @@ body.theme-day .navbar .collapse{
 /* лёгкий общий градиент-дымка поверх */
 .gallery-item.more-overlay::before {
   background: radial-gradient(120% 120% at 100% 0%,
-              rgba(255,210,138,.20), rgba(0,0,0,.55));
+              rgba(255,177,74,.20), rgba(0,0,0,.55));
   opacity: .0;
 }
 .gallery-item.more-overlay:hover::before,
@@ -369,8 +369,8 @@ body.theme-day .navbar .collapse{
 }
 .more-bars {
   display: grid; gap: 6px;
-  filter: drop-shadow(0 0 10px rgba(255,210,138,.9))
-          drop-shadow(0 0 18px rgba(255,210,138,.5));
+  filter: drop-shadow(0 0 10px rgba(255,177,74,.9))
+          drop-shadow(0 0 18px rgba(255,177,74,.5));
   transform: translateY(0);
   transition: transform .25s ease, opacity .25s ease;
 }
@@ -385,7 +385,7 @@ body.theme-day .navbar .collapse{
   position: absolute; bottom: 14px; right: 14px;
   font-weight: 800; letter-spacing: .5px;
   background: rgba(20,20,30,.55);
-  border: 1px solid rgba(255,210,138,.6);
+  border: 1px solid rgba(255,177,74,.6);
   border-radius: 999px; padding: 6px 12px;
   color: #c76b01; text-transform: uppercase; font-size: 12px;
   backdrop-filter: blur(6px);
@@ -402,7 +402,7 @@ body.theme-day .navbar .collapse{
 /* доступность фокуса для клавы */
 .more-link{ position:absolute; inset:0; z-index:3; }
 .more-link:focus{ outline: none; }
-.more-link:focus-visible{ outline: 2px solid #ffd28a; outline-offset: 4px; border-radius: 12px; }
+.more-link:focus-visible{ outline: 2px solid var(--link-accent); outline-offset: 4px; border-radius: 12px; }
 
 /* плеер не перекрывает модалку */
 .lb-open #ambientControl { 
@@ -419,13 +419,13 @@ body.theme-day .navbar .collapse{
   line-height: 1;
   border-radius: 10px;
   background: rgba(20,20,30,.35);
-  border: 1px solid rgba(255,210,138,.55);
+  border: 1px solid rgba(255,177,74,.55);
 }
 #lb-close:focus-visible{
-  outline: 2px solid #ffd28a; outline-offset: 3px;
+  outline: 2px solid var(--link-accent); outline-offset: 3px;
 }
 /* --- HARD FIX: player size & layers --- */
-:root { --ac:#ffd28a; }
+:root { --ac: var(--link-accent); }
 
 #ambientControl{
   position: fixed !important;
@@ -449,7 +449,7 @@ body.theme-day .navbar .collapse{
   background: rgba(18,18,26,.6) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255,210,138,.35) !important;
+  border: 1px solid rgba(255,177,74,.35) !important;
   border-radius: 16px !important;
   box-shadow: 0 8px 24px rgba(0,0,0,.35) !important;
 }
@@ -470,7 +470,7 @@ body.theme-day .navbar .collapse{
   z-index: 1310 !important;
   pointer-events: auto !important;
   mix-blend-mode: normal !important;
-  filter: drop-shadow(0 0 6px rgba(255,210,138,.6));
+  filter: drop-shadow(0 0 6px rgba(255,177,74,.6));
 }
 
 /* когда открыт лайтбокс/модалка — плеер не мешает */
