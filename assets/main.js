@@ -5,30 +5,48 @@
   const $  = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  /* ===== Theme (auto + manual) ===== */
-  const THEME_KEY = 'frenzy_theme';
-  function detectAutoTheme() {
-    const h = new Date().getHours();
-    return (h >= 6 && h < 18) ? 'day' : 'night';
-  }
-  function applyTheme(mode) {
-    document.body.classList.remove('theme-day', 'theme-night');
-    document.body.classList.add('theme-' + (mode === 'day' ? 'day' : 'night'));
-  }
-  function initTheme() {
-    const saved = localStorage.getItem(THEME_KEY);
-    applyTheme(saved || detectAutoTheme());
+  // /* ===== Theme (auto + manual) ===== */
+  // const THEME_KEY = 'frenzy_theme';
+  // function detectAutoTheme() {
+  //   const h = new Date().getHours();
+  //   return (h >= 6 && h < 18) ? 'day' : 'night';
+  // }
+  // function applyTheme(mode) {
+  //   document.body.classList.remove('theme-day', 'theme-night');
+  //   document.body.classList.add('theme-' + (mode === 'day' ? 'day' : 'night'));
+  // }
+  // function initTheme() {
+  //   const saved = localStorage.getItem(THEME_KEY);
+  //   applyTheme(saved || detectAutoTheme());
 
-    const toggle = $('#themeToggle');
-    if (toggle) {
-      toggle.addEventListener('click', () => {
-        const isDay = document.body.classList.contains('theme-day');
-        const next = isDay ? 'night' : 'day';
-        applyTheme(next);
-        localStorage.setItem(THEME_KEY, next);
-      });
-    }
+  //   const toggle = $('#themeToggle');
+  //   if (toggle) {
+  //     toggle.addEventListener('click', () => {
+  //       const isDay = document.body.classList.contains('theme-day');
+  //       const next = isDay ? 'night' : 'day';
+  //       applyTheme(next);
+  //       localStorage.setItem(THEME_KEY, next);
+  //     });
+  //   }
+  // }
+
+  function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+
+  // дефолт — night
+  applyTheme(saved || 'night');
+
+  const toggle = $('#themeToggle');
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const isDay = document.body.classList.contains('theme-day');
+      const next = isDay ? 'night' : 'day';
+      applyTheme(next);
+      localStorage.setItem(THEME_KEY, next);
+    });
   }
+}
+
 
   /* ===== Bootstrap tooltip (safe) ===== */
   function initTooltips() {
